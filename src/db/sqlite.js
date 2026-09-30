@@ -1,15 +1,99 @@
 import initSqlJs from 'sql.js';
+// Import directo de Vite para el archivo WASM como URL garantizada
+import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
 
 const SQLITE_STORAGE_KEY = 'evaluacion_sqlite_db_bin';
+const FALLBACK_STORAGE_KEY = 'evaluacion_sqlite_fallback_json';
 
 let dbInstance = null;
+
+// Implementación de respaldo Relacional en LocalStorage (si WebAssembly no se puede instanciar en el entorno)
+class LocalStorageFallbackDB {
+  constructor() {
+    const raw = localStorage.getItem(FALLBACK_STORAGE_KEY);
+    this.data = raw ? JSON.parse(raw) : { accesos: [], trabajos: [] };
+  }
+
+  save() {
+    localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(this.data));
+  }
+
+  run(query, params = []) {
+    // Parser liviano para INSERTs comunes
+    if (query.includes('INSERT INTO registro_accesos')) {
+      const [dni, nombre, fecha_dia, created_at] = params;
+      this.data.accesos.push({
+        id: this.data.accesos.length + 1,
+        dni,
+        nombre,
+        fecha_dia,
+        created_at
+      });
+      this.save();
+    } else if (query.includes('INSERT INTO entregas_trabajos')) {
+      const [dni, nombre, titulo_trabajo, es_entrega_final, codigo_html, codigo_js, fecha_registro, created_at] = params;
+      this.data.trabajos.push({
+        id: this.data.trabajos.length + 1,
+        dni,
+        nombre,
+        titulo_trabajo,
+        es_entrega_final,
+        codigo_html,
+        codigo_js,
+        fecha_registro,
+        created_at
+      });
+      this.save();
+    }
+  }
+
+  prepare(query) {
+    const self = this;
+    let boundParams = {};
+    let cursor = 0;
+    let results = [];
+
+    return {
+      bind(params) {
+        boundParams = params;
+        if (query.includes('FROM registro_accesos')) {
+          results = self.data.accesos.filter(a => 
+            a.dni === String(boundParams[':dni']).trim() &&
+            (!boundParams[':fecha'] || a.fecha_dia === boundParams[':fecha'])
+          );
+        } else if (query.includes('FROM entregas_trabajos')) {
+          if (boundParams[':dni']) {
+            results = self.data.trabajos.filter(t => t.dni === String(boundParams[':dni']).trim());
+          } else {
+            results = [...self.data.trabajos].reverse();
+          }
+        }
+        cursor = 0;
+      },
+      step() {
+        return cursor < results.length;
+      },
+      getAsObject() {
+        const item = results[cursor];
+        cursor++;
+        return item || {};
+      },
+      free() {}
+    };
+  }
+
+  export() {
+    return new Uint8Array();
+  }
+}
 
 export async function getDatabase() {
   if (dbInstance) return dbInstance;
 
+  // Intento 1: Carga con URL resuelta por Vite
   try {
     const SQL = await initSqlJs({
-      locateFile: file => `./${file}`
+      locateFile: () => wasmUrl
     });
 
     const savedBinary = localStorage.getItem(SQLITE_STORAGE_KEY);
@@ -21,18 +105,34 @@ export async function getDatabase() {
       initTables(dbInstance);
       persistDatabase(dbInstance);
     }
-
     return dbInstance;
-  } catch (error) {
-    console.error('Error inicializando SQLite Web:', error);
-    // Fallback con SQLite en memoria pura
-    const SQL = await initSqlJs({
-      locateFile: () => `https://sql.js.org/dist/sql-wasm.wasm`
-    });
-    dbInstance = new SQL.Database();
-    initTables(dbInstance);
-    return dbInstance;
+  } catch (err1) {
+    console.warn('Fallo método 1 de WASM, intentando CDN...', err1);
   }
+
+  // Intento 2: Carga desde CDN oficial de sql.js
+  try {
+    const SQL = await initSqlJs({
+      locateFile: () => 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.12.0/sql-wasm.wasm'
+    });
+
+    const savedBinary = localStorage.getItem(SQLITE_STORAGE_KEY);
+    if (savedBinary) {
+      const uInt8Array = Uint8Array.from(atob(savedBinary), c => c.charCodeAt(0));
+      dbInstance = new SQL.Database(uInt8Array);
+    } else {
+      dbInstance = new SQL.Database();
+      initTables(dbInstance);
+      persistDatabase(dbInstance);
+    }
+    return dbInstance;
+  } catch (err2) {
+    console.warn('WASM no disponible, usando motor de persistencia alternativo en LocalStorage:', err2);
+  }
+
+  // Intento 3: Motor alternativo 100% infalible que nunca arroja CompileError
+  dbInstance = new LocalStorageFallbackDB();
+  return dbInstance;
 }
 
 function initTables(db) {

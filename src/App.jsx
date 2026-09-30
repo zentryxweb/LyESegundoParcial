@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import Editor from '@monaco-editor/react';
 import { marked } from 'marked';
 import './App.css';
 import { initialHtmlCode, initialJsCode } from './data/initialCode';
@@ -14,43 +15,49 @@ import { generarPaqueteEntregaFinal } from './utils/zipExporter';
 
 const TEACHER_PIN = "39370453";
 
-// Lista fiel a los archivos en Material/md
+// Materiales de cátedra disponibles para consulta en línea (HTML interactivos y PDFs)
 const MATERIALES_MD = [
   {
-    id: 'arraydinamico',
-    titulo: 'Array Dinámico & CRUD',
-    archivo: 'arraydinamido.md',
-    desc: 'Métodos push, pop, splice, iteración con for y CRUD con objetos.'
+    id: 'arraylist_html',
+    titulo: 'ArrayList Dinámicos (HTML Interactivo)',
+    archivo: 'ArrayList Dinamicos.html',
+    tipo: 'html',
+    desc: 'Guía interactiva ejecutable con botones y código.'
   },
   {
-    id: 'crud_completo',
-    titulo: 'Manual CRUD Completo por DNI',
-    archivo: 'manual crud completo crud.md',
-    desc: 'Buscar, Modificar, Eliminar y Agregar con validación por DNI.'
+    id: 'funciones_html',
+    titulo: 'Funciones y Pasaje de Parámetros (HTML)',
+    archivo: 'Funciones y Pasaje de Parámetros.html',
+    tipo: 'html',
+    desc: 'Guía interactiva de subprogramas y cadenas.'
   },
   {
-    id: 'funciones',
-    titulo: 'Funciones y Pasaje de Parámetros',
-    archivo: 'Funciones y Pasaje de Parámetros.md',
-    desc: 'Parámetros por valor y referencia, modularización y sanitización.'
+    id: 'js_html_pdf',
+    titulo: 'JavaScript en HTML (PDF)',
+    archivo: 'JavaScript en HTML - Guía Práctica.pdf',
+    tipo: 'pdf',
+    desc: 'Documento PDF oficial de cátedra.'
   },
   {
-    id: 'js_pseint_1',
-    titulo: 'JavaScript vs PSeInt (Parte 1)',
-    archivo: 'manual-javascript vs pseint.md',
-    desc: 'Variables, Number(prompt()), if, switch y bucle while.'
+    id: 'crud_pdf',
+    titulo: 'Manual CRUD Completo (PDF)',
+    archivo: 'manual-crud-completo crud.pdf',
+    tipo: 'pdf',
+    desc: 'Presentación completa en PDF de operaciones CRUD.'
   },
   {
-    id: 'js_pseint_2',
-    titulo: 'JavaScript vs PSeInt (Parte 2)',
-    archivo: 'manual-javascript-pseint-parte2.md',
-    desc: 'Bucles for, do-while, arreglos y Proyecto Control de Notas.'
+    id: 'pseint_1_pdf',
+    titulo: 'JavaScript vs PSeInt Parte 1 (PDF)',
+    archivo: 'manual-javascript vs pseint.pdf',
+    tipo: 'pdf',
+    desc: 'Diapositivas teóricas en PDF.'
   },
   {
-    id: 'js_en_html',
-    titulo: 'JavaScript en HTML',
-    archivo: 'JavaScript en HTML.md',
-    desc: 'Loader index.html, vinculación de app.js y eventos onclick.'
+    id: 'pseint_2_pdf',
+    titulo: 'JavaScript vs PSeInt Parte 2 (PDF)',
+    archivo: 'manual-javascript-pseint-parte2.pdf',
+    tipo: 'pdf',
+    desc: 'Segunda parte del manual en PDF.'
   }
 ];
 
@@ -62,13 +69,17 @@ export default function App() {
   const [loginError, setLoginError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
 
-  // Estado del Editor: renderizado exclusivo para evitar superposiciones
-  const [activeTab, setActiveTab] = useState('html'); // 'html' | 'js'
+  // Estado del Editor
+  const [activeTab, setActiveTab] = useState('js'); // 'html' | 'js'
   const [htmlCode, setHtmlCode] = useState(initialHtmlCode);
   const [jsCode, setJsCode] = useState(initialJsCode);
 
-  // Visor en Línea de Material Markdown (Sin descargas)
-  const [activeDoc, setActiveDoc] = useState(null); // { titulo, contentHtml }
+  // Diagnóstico de Errores con Línea Exacta
+  const [jsError, setJsError] = useState(null); // { message, line }
+  const monacoRef = useRef(null);
+
+  // Visor en Línea de Material (Sin descargas)
+  const [activeDoc, setActiveDoc] = useState(null); // { titulo, type, contentHtml, url }
   const [loadingDoc, setLoadingDoc] = useState(false);
 
   // Estado de Trabajos del Alumno
@@ -96,6 +107,34 @@ export default function App() {
     }
   }, []);
 
+  // Validación y detección dinámica de errores en JavaScript con número de línea
+  useEffect(() => {
+    if (!jsCode || !jsCode.trim()) {
+      setJsError(null);
+      return;
+    }
+
+    try {
+      // Intenta compilar la función para detectar errores de sintaxis
+      new Function(jsCode);
+      setJsError(null);
+    } catch (err) {
+      // Extrae la línea del error si está disponible
+      let line = null;
+      if (err.stack) {
+        const match = err.stack.match(/<anonymous>:(\d+):(\d+)/) || err.stack.match(/eval:(\d+):(\d+)/);
+        if (match && match[1]) {
+          line = Number(match[1]) - 2; // Compensar wrapper de Function
+          if (line <= 0) line = 1;
+        }
+      }
+      setJsError({
+        message: err.message,
+        line: line || 'Sintaxis'
+      });
+    }
+  }, [jsCode]);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => {
@@ -112,7 +151,7 @@ export default function App() {
     }
   };
 
-  // Comenzar a trabajar: sin validación que impida entrar, solo para identificar y nombrar
+  // Comenzar a trabajar: sin validación previa, solo para el nombre del archivo
   const handleStartWorking = async () => {
     const finalName = nameInput.trim() || 'Estudiante';
     const finalDni = dniInput.trim().replace(/\D/g, '') || '00000000';
@@ -121,7 +160,6 @@ export default function App() {
     setLoginError('');
 
     try {
-      // Verificación en SQLite de no repetir ingreso en el día
       const resultado = await registrarAccesoDiario(finalDni, finalName);
 
       if (!resultado.allowed) {
@@ -134,7 +172,7 @@ export default function App() {
       setStudent(alumnoData);
       sessionStorage.setItem('alumno_sesion_activa', JSON.stringify(alumnoData));
       await cargarHistorialAlumno(finalDni);
-      showToast(`¡Bienvenido/a, ${finalName}! Ingreso registrado.`);
+      showToast(`¡Bienvenido/a, ${finalName}! Ingreso registrado en SQLite.`);
     } catch (err) {
       console.error(err);
       const alumnoData = { nombre: finalName, dni: finalDni };
@@ -145,16 +183,29 @@ export default function App() {
     }
   };
 
-  // Abrir Material en Línea en Visor Modal (100% en línea, sin descargas)
+  // Abrir Material en Línea en Visor Modal (md, html y pdfs en visor web)
   const handleOpenDocOnline = async (mat) => {
     setLoadingDoc(true);
+    const fileUrl = `./material_md/${encodeURIComponent(mat.archivo)}`;
+
+    if (mat.tipo === 'pdf' || mat.tipo === 'html') {
+      setActiveDoc({
+        titulo: mat.titulo,
+        type: mat.tipo,
+        url: fileUrl
+      });
+      setLoadingDoc(false);
+      return;
+    }
+
     try {
-      const resp = await fetch(`./material_md/${encodeURIComponent(mat.archivo)}`);
+      const resp = await fetch(fileUrl);
       if (!resp.ok) throw new Error('No se pudo leer el archivo');
       const text = await resp.text();
       const contentHtml = marked.parse(text);
       setActiveDoc({
         titulo: mat.titulo,
+        type: 'md',
         contentHtml
       });
     } catch (err) {
@@ -165,47 +216,7 @@ export default function App() {
     }
   };
 
-  // Abrir también en ventana emergente independiente si el alumno lo prefiere
-  const handleOpenDocInNewWindow = async (mat) => {
-    try {
-      const resp = await fetch(`./material_md/${encodeURIComponent(mat.archivo)}`);
-      const text = await resp.text();
-      const htmlBody = marked.parse(text);
-
-      const win = window.open('', '_blank', 'width=900,height=750,resizable=yes,scrollbars=yes');
-      if (!win) {
-        alert('Habilite las ventanas emergentes en el navegador.');
-        return;
-      }
-
-      win.document.open();
-      win.document.write(`<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>${mat.titulo} - Material de Clases</title>
-  <style>
-    body { font-family: system-ui, sans-serif; padding: 30px; background: #0f172a; color: #f8fafc; line-height: 1.6; }
-    h1, h2, h3 { color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 6px; }
-    pre { background: #1e293b; padding: 14px; border-radius: 8px; overflow-x: auto; color: #7dd3fc; }
-    code { background: #334155; padding: 2px 5px; border-radius: 4px; color: #fde047; }
-    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-    th, td { border: 1px solid #475569; padding: 8px 12px; }
-    th { background: #1e293b; }
-  </style>
-</head>
-<body>
-  ${htmlBody}
-</body>
-</html>`);
-      win.document.close();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   // Ejecutar en Live Server (Ventana Emergente Popup)
-  // Como no usamos estilos ni DOM, inyecta el script directamente en el index.html puro
   const handleRunLiveServer = () => {
     let combinedContent = htmlCode;
     if (jsCode.trim()) {
@@ -227,24 +238,36 @@ export default function App() {
     liveWindow.document.close();
   };
 
-  // Guardar un avance parcial (varios trabajos antes de la entrega final)
+  // Guardar Avance: guarda el trabajo y LIMPIA la pestaña para el siguiente ejercicio sin bloquear la UI
   const handleSaveAvance = async () => {
     if (!student) return;
     const nro = trabajosRealizados.length + 1;
-    const titulo = prompt(`Nombre para este ejercicio/avance #${nro}:`, `Ejercicio ${nro}`);
-    if (titulo === null) return;
+    const tituloInput = window.prompt(`Nombre o título para este avance/ejercicio #${nro}:`, `Ejercicio ${nro}`);
+    if (tituloInput === null) return; // Cancelado por el usuario
 
-    await guardarTrabajo({
-      dni: student.dni,
-      nombre: student.nombre,
-      tituloTrabajo: titulo || `Ejercicio ${nro}`,
-      esFinal: false,
-      html: htmlCode,
-      js: jsCode
-    });
+    const titulo = tituloInput.trim() || `Ejercicio ${nro}`;
 
-    await cargarHistorialAlumno(student.dni);
-    showToast(`✓ Avance "${titulo || `Ejercicio ${nro}`}" guardado.`);
+    try {
+      await guardarTrabajo({
+        dni: student.dni,
+        nombre: student.nombre,
+        tituloTrabajo: titulo,
+        esFinal: false,
+        html: htmlCode,
+        js: jsCode
+      });
+
+      await cargarHistorialAlumno(student.dni);
+
+      // LIMPIAR la pestaña para empezar un nuevo ejercicio fresco
+      setJsCode('');
+      setHtmlCode(initialHtmlCode);
+
+      showToast(`✓ Avance "${titulo}" guardado exitosamente. Pestaña lista para el siguiente ejercicio.`);
+    } catch (err) {
+      console.error(err);
+      showToast('⚠️ No se pudo guardar el avance: ' + (err.message || 'Error desconocido'));
+    }
   };
 
   // Entrega Final con paquete ZIP que reúne todo
@@ -342,17 +365,194 @@ export default function App() {
     }
   };
 
+  // Configuración del editor Monaco (autocompletado, snippets y tema oscuro tipo VS Code)
+  const handleEditorDidMount = (editor, monaco) => {
+    monacoRef.current = editor;
+
+    // Registrar autocompletado dinámico para HTML (ej: button, script, input, div, boilerplates)
+    monaco.languages.registerCompletionItemProvider('html', {
+      provideCompletionItems: (model, position) => {
+        const word = model.getWordUntilPosition(position);
+        const range = {
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: word.startColumn,
+          endColumn: word.endColumn
+        };
+
+        const suggestions = [
+          {
+            label: 'button',
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: '<button onclick="${1:miFuncion()}">${2:Presione aquí}</button>',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Inserta un botón HTML con manejador de eventos onclick',
+            range
+          },
+          {
+            label: 'button:id',
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: '<button id="${1:btnAccion}">${2:Aceptar}</button>',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Inserta un botón con atributo id',
+            range
+          },
+          {
+            label: 'script:src',
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: '<script src="${1:app.js}"></script>',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Vincula un archivo JavaScript externo (ej: app.js)',
+            range
+          },
+          {
+            label: 'input:text',
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: '<input type="text" id="${1:txtNombre}" placeholder="${2:Ingrese valor}">',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Campo de entrada de texto',
+            range
+          },
+          {
+            label: 'input:button',
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: '<input type="button" value="${1:Ejecutar}" onclick="${2:iniciar()}">',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Botón con etiqueta input',
+            range
+          },
+          {
+            label: 'html5:loader',
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: '<!DOCTYPE html>\n<html lang="es">\n<head>\n\t<meta charset="UTF-8">\n\t<title>${1:Práctica LyE}</title>\n</head>\n<body>\n\t<h1>${2:Programa en Ejecución}</h1>\n\t<script src="app.js"></script>\n</body>\n</html>',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Estructura mínima HTML5 como cargador de app.js',
+            range
+          },
+          {
+            label: 'div',
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: '<div id="${1:contenedor}">\n\t${2}\n</div>',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Contenedor div básico',
+            range
+          }
+        ];
+
+        return { suggestions };
+      }
+    });
+
+    // Sugerencias de autocompletado para JavaScript
+    monaco.languages.registerCompletionItemProvider('javascript', {
+      provideCompletionItems: (model, position) => {
+        const word = model.getWordUntilPosition(position);
+        const range = {
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: word.startColumn,
+          endColumn: word.endColumn
+        };
+
+        const suggestions = [
+          {
+            label: 'prompt',
+            kind: monaco.languages.CompletionItemKind.Function,
+            insertText: 'prompt("${1:Mensaje:}")',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Solicita una entrada al usuario mediante ventana modal',
+            range
+          },
+          {
+            label: 'alert',
+            kind: monaco.languages.CompletionItemKind.Function,
+            insertText: 'alert("${1:Mensaje}");',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Muestra una alerta al usuario',
+            range
+          },
+          {
+            label: 'confirm',
+            kind: monaco.languages.CompletionItemKind.Function,
+            insertText: 'confirm("${1:¿Confirmar acción?}");',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Ventana de confirmación Aceptar/Cancelar',
+            range
+          },
+          {
+            label: 'Number(prompt())',
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: 'Number(prompt("${1:Ingrese un número:}"));',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Lee un valor numérico convirtiendo el String de prompt',
+            range
+          },
+          {
+            label: 'parseInt(prompt())',
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: 'parseInt(prompt("${1:Ingrese un entero:}"));',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Convierte texto de prompt a número entero',
+            range
+          },
+          {
+            label: 'for (bucle)',
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: 'for (let ${1:i} = 0; ${1:i} < ${2:array}.length; ${1:i}++) {\n\t${3}\n}',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Bucle for para iterar arreglos',
+            range
+          },
+          {
+            label: 'while (menu)',
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: 'let opcion = "";\nwhile (opcion !== "${1:5}") {\n\topcion = prompt("1. Agregar\\n2. Listar\\n3. Buscar\\n4. Eliminar\\n5. Salir");\n\tswitch(opcion) {\n\t\tcase "1":\n\t\t\t// Agregar\n\t\t\tbreak;\n\t\tcase "2":\n\t\t\t// Listar\n\t\t\tbreak;\n\t\tcase "3":\n\t\t\t// Buscar\n\t\t\tbreak;\n\t\tcase "4":\n\t\t\t// Eliminar\n\t\t\tbreak;\n\t\tcase "5":\n\t\t\talert("Fin del programa.");\n\t\t\tbreak;\n\t\tdefault:\n\t\t\talert("Opción no válida.");\n\t\t\tbreak;\n\t}\n}',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Estructura de menú interactivo con while y switch',
+            range
+          },
+          {
+            label: 'push',
+            kind: monaco.languages.CompletionItemKind.Method,
+            insertText: 'push(${1:elemento});',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Agrega un elemento al final del arreglo',
+            range
+          },
+          {
+            label: 'splice',
+            kind: monaco.languages.CompletionItemKind.Method,
+            insertText: 'splice(${1:indice}, ${2:1});',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Elimina elementos del arreglo por su índice',
+            range
+          },
+          {
+            label: 'function',
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: 'function ${1:nombreFuncion}(${2:param}) {\n\t${3}\n}',
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            documentation: 'Declaración de función modularizada',
+            range
+          }
+        ];
+
+        return { suggestions };
+      }
+    });
+  };
+
   return (
     <>
       {/* Modal Identificación */}
       {!student && (
         <div className="modal-overlay">
           <div className="login-card">
-            <h2>🎓 Evaluación Web</h2>
+            <h2>🎓 Práctica Web</h2>
             <p>Ingresa tu Nombre y DNI. Se utilizan para armar el nombre de tus archivos de entrega sin trabar tu ingreso.</p>
 
             <div className="info-banner">
-              🔒 <strong>Validación SQLite Diaria:</strong> Cada alumno cuenta con un único ingreso habilitado por día para el examen.
+              🔒 <strong>Validación SQLite Diaria:</strong> Cada alumno cuenta con un único ingreso habilitado por día para la práctica.
             </div>
 
             {loginError && <div className="login-error">❌ {loginError}</div>}
@@ -398,8 +598,7 @@ export default function App() {
         <div className="brand">
           <div className="brand-title">
             <span>💻</span>
-            <span>Evaluación L&amp;E</span>
-            <span className="badge-sqlite">SQLite Web</span>
+            <span>Práctica L&amp;E</span>
           </div>
 
           {student && (
@@ -423,9 +622,9 @@ export default function App() {
         </div>
       </header>
 
-      {/* Workspace Principal */}
+      {/* Workspace Principal (100% Pantalla Completa) */}
       <main className="workspace">
-        {/* Panel Izquierdo: Material Exclusivo de Cátedra (Ver en línea sin descargas) */}
+        {/* Panel Izquierdo: Material Exclusivo de Cátedra (Solo Ver en Línea) */}
         <aside className="guide-panel">
           <div className="guide-panel-title">
             <span>📖 Material Oficial de Clases</span>
@@ -435,7 +634,7 @@ export default function App() {
             <div className="guide-card-box">
               <strong>💡 Consulta en Línea:</strong>
               <p style={{ margin: '4px 0 0 0', color: '#94a3b8' }}>
-                Todos los ejemplos trabajados en clase (arreglos, menús interactivos, CRUD y funciones) se visualizan directamente en pantalla sin descargar nada.
+                Todos los manuales, guías y presentaciones se visualizan directamente en pantalla sin pop-ups ni descargas.
               </p>
             </div>
 
@@ -445,29 +644,19 @@ export default function App() {
                   <div className="material-title">{mat.titulo}</div>
                   <div className="material-desc">{mat.desc}</div>
                 </div>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button
-                    className="btn-open-popup"
-                    onClick={() => handleOpenDocOnline(mat)}
-                    title="Ver en pantalla en línea"
-                  >
-                    👁️ Ver
-                  </button>
-                  <button
-                    className="btn-open-popup"
-                    style={{ background: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.4)', color: '#c4b5fd' }}
-                    onClick={() => handleOpenDocInNewWindow(mat)}
-                    title="Abrir en ventana emergente independiente"
-                  >
-                    ↗ Pop-up
-                  </button>
-                </div>
+                <button
+                  className="btn-open-popup"
+                  onClick={() => handleOpenDocOnline(mat)}
+                  title="Ver en pantalla en línea"
+                >
+                  👁️ Ver
+                </button>
               </div>
             ))}
           </div>
         </aside>
 
-        {/* Panel Derecho: Editor sin sobreposiciones */}
+        {/* Panel Derecho: Editor IDE Monaco con Autocompletado */}
         <section className="editor-panel">
           <div className="editor-toolbar">
             <div className="tabs">
@@ -489,8 +678,8 @@ export default function App() {
               <button className="btn-ctrl btn-run" onClick={handleRunLiveServer} title="Probar código en ventana emergente">
                 <span>▶</span> Ejecutar en Live Server
               </button>
-              <button className="btn-ctrl btn-save-step" onClick={handleSaveAvance} title="Guarda un avance parcial">
-                <span>💾</span> Guardar Avance
+              <button className="btn-ctrl btn-save-step" onClick={handleSaveAvance} title="Guarda el avance y limpia la pestaña para el próximo ejercicio">
+                <span>💾</span> Guardar Avance y Limpiar
               </button>
               <button className="btn-ctrl btn-final" onClick={handleFinalSubmit} title="Consolida todos los trabajos en el paquete final">
                 <span>🎓</span> Entrega Final
@@ -499,29 +688,67 @@ export default function App() {
           </div>
 
           <div className="code-container">
-            {/* Renderizado condicional estricto: solo el archivo seleccionado se renderiza */}
             {activeTab === 'html' ? (
-              <textarea
-                className="code-editor"
+              <Editor
+                height="100%"
+                language="html"
+                theme="vs-dark"
                 value={htmlCode}
-                onChange={(e) => setHtmlCode(e.target.value)}
-                spellCheck="false"
-                placeholder="Escribe tu código HTML aquí..."
+                onChange={(value) => setHtmlCode(value || '')}
+                onMount={handleEditorDidMount}
+                options={{
+                  fontSize: 14,
+                  minimap: { enabled: false },
+                  automaticLayout: true,
+                  tabSize: 2,
+                  scrollBeyondLastLine: false,
+                  quickSuggestions: { other: true, comments: true, strings: true },
+                  suggestOnTriggerCharacters: true,
+                  wordWrap: 'on'
+                }}
               />
             ) : (
-              <textarea
-                className="code-editor"
+              <Editor
+                height="100%"
+                language="javascript"
+                theme="vs-dark"
                 value={jsCode}
-                onChange={(e) => setJsCode(e.target.value)}
-                spellCheck="false"
-                placeholder="Escribe tu código JavaScript aquí..."
+                onChange={(value) => setJsCode(value || '')}
+                onMount={handleEditorDidMount}
+                options={{
+                  fontSize: 14,
+                  minimap: { enabled: false },
+                  automaticLayout: true,
+                  tabSize: 2,
+                  scrollBeyondLastLine: false,
+                  quickSuggestions: { other: true, comments: true, strings: true },
+                  suggestOnTriggerCharacters: true,
+                  wordWrap: 'on'
+                }}
               />
             )}
+          </div>
+
+          {/* Barra de Diagnóstico de Errores con Línea Exacta */}
+          <div className="error-diagnostics-bar">
+            {activeTab === 'js' && jsError ? (
+              <div className="error-badge-fail">
+                <span className="error-line-tag">Línea {jsError.line}</span>
+                <span>⚠️ Error de Sintaxis: {jsError.message}</span>
+              </div>
+            ) : (
+              <div className="error-badge-ok">
+                <span>✓ Sintaxis de código válida. IDE listo para ejecutar.</span>
+              </div>
+            )}
+            <div style={{ color: '#71717a', fontSize: '0.75rem' }}>
+              Autocompletado activo: <kbd>Ctrl</kbd> + <kbd>Espacio</kbd>
+            </div>
           </div>
         </section>
       </main>
 
-      {/* Visor Modal de Documentación Markdown (100% en línea, sin descargas) */}
+      {/* Visor Modal de Documentación (md, html y pdfs en pantalla completa sin descargas) */}
       {activeDoc && (
         <div className="md-viewer-overlay" onClick={() => setActiveDoc(null)}>
           <div className="md-viewer-container" onClick={(e) => e.stopPropagation()}>
@@ -529,10 +756,25 @@ export default function App() {
               <h3>📖 {activeDoc.titulo}</h3>
               <button className="btn-close" onClick={() => setActiveDoc(null)} title="Cerrar">&times;</button>
             </div>
-            <div
-              className="md-viewer-body"
-              dangerouslySetInnerHTML={{ __html: activeDoc.contentHtml }}
-            />
+
+            {activeDoc.type === 'pdf' ? (
+              <iframe
+                src={activeDoc.url}
+                title={activeDoc.titulo}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+              />
+            ) : activeDoc.type === 'html' ? (
+              <iframe
+                src={activeDoc.url}
+                title={activeDoc.titulo}
+                style={{ width: '100%', height: '100%', border: 'none', background: '#fff' }}
+              />
+            ) : (
+              <div
+                className="md-viewer-body"
+                dangerouslySetInnerHTML={{ __html: activeDoc.contentHtml }}
+              />
+            )}
           </div>
         </div>
       )}
