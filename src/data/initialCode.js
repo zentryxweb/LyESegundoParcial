@@ -2,10 +2,10 @@ export const initialHtmlCode = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Segundo Parcial - Laboratorio y Estructuras</title>
+  <title>Práctica - Laboratorio y Estructuras</title>
 </head>
 <body>
-  <h1>Segundo Parcial</h1>
+  <h1>Práctica de Laboratorio y Estructuras</h1>
   <p>El programa se ejecuta a través de ventanas interactivas.</p>
   
   <!-- Loader del archivo app.js tal como vimos en clases -->
@@ -13,7 +13,7 @@ export const initialHtmlCode = `<!DOCTYPE html>
 </body>
 </html>`;
 
-export const initialJsCode = `// SEGUNDO PARCIAL: SISTEMA DE DATOS INTERACTIVO
+export const initialJsCode = `// PRÁCTICA INTEGRAL: SISTEMA DE DATOS INTERACTIVO
 // Uso de arreglos, objetos, bucles (for, while), prompt() y alert()
 
 let alumnos = [

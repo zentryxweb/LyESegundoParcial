@@ -210,7 +210,7 @@ export async function registrarAccesoDiario(dni, nombre) {
     // Ya ingresó hoy -> no puede ingresar más de una vez en el día
     return {
       allowed: false,
-      message: `El DNI ${cleanDni} ya registró su ingreso oficial para la fecha de hoy (${hoy}) a las ${row.created_at}. Según las reglas de examen no está permitido reingresar.`,
+      message: `El DNI ${cleanDni} ya registró su ingreso oficial para la fecha de hoy (${hoy}) a las ${row.created_at}. Según las pautas de la práctica no está permitido reingresar.`,
       alumno: row
     };
   }
@@ -308,6 +308,7 @@ export async function getAllAccesos() {
  */
 export async function resetDatabase() {
   localStorage.removeItem(SQLITE_STORAGE_KEY);
+  localStorage.removeItem(FALLBACK_STORAGE_KEY);
   dbInstance = null;
   const db = await getDatabase();
   return db;

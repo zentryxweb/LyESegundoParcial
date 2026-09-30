@@ -92,6 +92,14 @@ export default function App() {
   const [teacherAccesos, setTeacherAccesos] = useState([]);
   const [teacherViewTab, setTeacherViewTab] = useState('entregas');
 
+  // Modal de Clave Profesor (PIN Modal in-app)
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinInputValue, setPinInputValue] = useState('');
+  const [pinError, setPinError] = useState('');
+
+  // Runner Interactivo Aislado (No traba el IDE en GitHub Pages ni navegadores)
+  const [runnerModal, setRunnerModal] = useState(null); // { htmlContent, key }
+
   useEffect(() => {
     const session = sessionStorage.getItem('alumno_sesion_activa');
     if (session) {
@@ -216,7 +224,7 @@ export default function App() {
     }
   };
 
-  // Ejecutar en Live Server (Ventana Emergente Popup)
+  // Ejecutar en Live Server (Runner Modal Aislado sin trabar el hilo ni la pestaña)
   const handleRunLiveServer = () => {
     let combinedContent = htmlCode;
     if (jsCode.trim()) {
@@ -228,14 +236,11 @@ export default function App() {
       }
     }
 
-    const liveWindow = window.open('', '_blank', 'width=800,height=600,resizable=yes,scrollbars=yes');
-    if (!liveWindow) {
-      alert('⚠️ Por favor habilita los pop-ups en tu navegador para ver la prueba interactiva.');
-      return;
-    }
-    liveWindow.document.open();
-    liveWindow.document.write(combinedContent);
-    liveWindow.document.close();
+    setRunnerModal({
+      title: 'Prueba Interactiva en Vivo (Live Runner)',
+      htmlContent: combinedContent,
+      key: Date.now()
+    });
   };
 
   // Guardar Avance: guarda el trabajo y LIMPIA la pestaña para el siguiente ejercicio sin bloquear la UI
@@ -275,14 +280,14 @@ export default function App() {
     if (!student) return;
 
     const confirmSubmit = window.confirm(
-      `¿Deseas realizar la ENTREGA FINAL de tu examen?\n\nSe empaquetará el conjunto de tus ${trabajosRealizados.length} avances previos junto con el código actual en tu archivo final.`
+      `¿Deseas realizar la ENTREGA FINAL ?\n\nSe empaquetará el conjunto de tus ${trabajosRealizados.length} avances previos junto con el código actual en tu archivo final.`
     );
     if (!confirmSubmit) return;
 
     await guardarTrabajo({
       dni: student.dni,
       nombre: student.nombre,
-      tituloTrabajo: 'Entrega Final Evaluada',
+      tituloTrabajo: 'Entrega Final de Práctica',
       esFinal: true,
       html: htmlCode,
       js: jsCode
@@ -307,21 +312,30 @@ export default function App() {
     }
   };
 
-  // Acceso Docente
-  const handleOpenTeacher = async () => {
-    const pin = prompt("🔐 Ingrese la clave maestra de profesor:");
-    if (pin === null) return;
+  // Abrir Modal de Clave Docente (In-App PIN Modal sin depender de prompt)
+  const handleOpenTeacher = () => {
+    setPinInputValue('');
+    setPinError('');
+    setShowPinModal(true);
+  };
 
-    if (pin.trim() === TEACHER_PIN) {
-      const [trabajos, accesos] = await Promise.all([
-        getAllTrabajos(),
-        getAllAccesos()
-      ]);
-      setTeacherSubmissions(trabajos);
-      setTeacherAccesos(accesos);
-      setShowTeacherDrawer(true);
+  const handleVerifyTeacherPin = async () => {
+    if (pinInputValue.trim() === TEACHER_PIN) {
+      setShowPinModal(false);
+      try {
+        const [trabajos, accesos] = await Promise.all([
+          getAllTrabajos(),
+          getAllAccesos()
+        ]);
+        setTeacherSubmissions(trabajos);
+        setTeacherAccesos(accesos);
+        setShowTeacherDrawer(true);
+      } catch (err) {
+        console.error(err);
+        alert('Error al acceder a SQLite docente: ' + err.message);
+      }
     } else {
-      alert("❌ Clave incorrecta. Acceso denegado.");
+      setPinError('❌ Clave incorrecta. Acceso denegado.');
     }
   };
 
@@ -345,14 +359,11 @@ export default function App() {
       }
     }
 
-    const previewWin = window.open('', '_blank', 'width=800,height=600,resizable=yes,scrollbars=yes');
-    if (!previewWin) {
-      alert('Habilita ventanas emergentes en el navegador.');
-      return;
-    }
-    previewWin.document.open();
-    previewWin.document.write(combined);
-    previewWin.document.close();
+    setRunnerModal({
+      title: `Prueba de Entrega: ${item.nombre} (${item.titulo_trabajo})`,
+      htmlContent: combined,
+      key: Date.now()
+    });
   };
 
   const handleResetDb = async () => {
@@ -884,6 +895,85 @@ export default function App() {
                   🗑️ Resetear Base de Datos SQLite Docente
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Runner Interactivo Aislado (Iframe Sandbox - Nunca tilda ni bloquea el IDE) */}
+      {runnerModal && (
+        <div className="runner-overlay" onClick={() => setRunnerModal(null)}>
+          <div className="runner-card" onClick={(e) => e.stopPropagation()}>
+            <div className="runner-header">
+              <div className="runner-title">
+                <span>▶</span>
+                <span>{runnerModal.title}</span>
+              </div>
+              <div className="runner-actions">
+                <button
+                  className="btn-runner-reload"
+                  onClick={() => setRunnerModal(prev => ({ ...prev, key: Date.now() }))}
+                  title="Reiniciar ejecución del código"
+                >
+                  🔄 Reiniciar
+                </button>
+                <button className="btn-close" onClick={() => setRunnerModal(null)} title="Cerrar y volver al editor">
+                  &times;
+                </button>
+              </div>
+            </div>
+            <div className="runner-iframe-wrapper">
+              <iframe
+                key={runnerModal.key}
+                className="runner-iframe"
+                title="Live Runner Sandbox"
+                srcDoc={runnerModal.htmlContent}
+                sandbox="allow-scripts allow-modals"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Autenticación Profesor (PIN Dialog In-App) */}
+      {showPinModal && (
+        <div className="pin-dialog-overlay" onClick={() => setShowPinModal(false)}>
+          <div className="pin-dialog-card" onClick={(e) => e.stopPropagation()}>
+            <h3>🔒 Acceso Docente</h3>
+            <p>Ingrese la clave maestra de profesor para visualizar entregas y accesos:</p>
+
+            {pinError && <div className="login-error" style={{ marginBottom: '12px' }}>{pinError}</div>}
+
+            <input
+              type="password"
+              className="form-group"
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                background: '#09090b',
+                border: '1px solid #3f3f46',
+                borderRadius: '8px',
+                color: '#fff',
+                fontSize: '1rem',
+                outline: 'none'
+              }}
+              placeholder="Contraseña del profesor"
+              value={pinInputValue}
+              onChange={(e) => {
+                setPinInputValue(e.target.value);
+                setPinError('');
+              }}
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && handleVerifyTeacherPin()}
+            />
+
+            <div className="pin-dialog-actions">
+              <button className="btn-pin-cancel" onClick={() => setShowPinModal(false)}>
+                Cancelar
+              </button>
+              <button className="btn-pin-confirm" onClick={handleVerifyTeacherPin}>
+                Entrar
+              </button>
             </div>
           </div>
         </div>

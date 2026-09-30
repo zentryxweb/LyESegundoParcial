@@ -9,10 +9,10 @@ export async function generarPaqueteEntregaFinal({ alumno, trabajos, trabajoActu
   const folderName = `ENTREGA_FINAL_${alumno.dni}_${safeName}`;
   const folder = zip.folder(folderName);
 
-  // 1. Manifiesto del Examen
+  // 1. Manifiesto de la Práctica
   const manifest = {
     institucion: "Cátedra Laboratorio y Estructuras",
-    evaluacion: "Segundo Parcial",
+    evaluacion: "Práctica Evaluativa y Formativa",
     alumno: {
       nombre: alumno.nombre,
       dni: alumno.dni
@@ -33,14 +33,14 @@ export async function generarPaqueteEntregaFinal({ alumno, trabajos, trabajoActu
     ]
   };
 
-  folder.file('README_ENTREGA.txt', `EVALUACIÓN L&E - SEGUNDO PARCIAL
+  folder.file('README_ENTREGA.txt', `PRÁCTICA L&E - ENTREGA DE TRABAJOS
 Alumno: ${alumno.nombre}
 DNI: ${alumno.dni}
 Fecha de Entrega Final: ${manifest.fechaEntrega}
 Total de ejercicios incluidos: ${manifest.cantidadTrabajos}
 -----------------------------------------------------------
-Este archivo comprimido contiene todos los trabajos y avances desarrollados
-durante la sesión de examen.
+Este archivo comprimido contiene todos los ejercicios y avances desarrollados
+durante la práctica para su corrección.
 `);
 
   folder.file('manifiesto.json', JSON.stringify(manifest, null, 2));
