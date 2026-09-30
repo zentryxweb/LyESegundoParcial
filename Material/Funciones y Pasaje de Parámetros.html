@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual Interactivo JavaScript: Funciones y Manejo de Cadenas</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #0f172a;
+      --bg-light: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --border-color: #e2e8f0;
+      --code-bg: #0f172a;
+      --accent-green: #10b981;
+      --accent-amber: #d97706;
+      --accent-purple: #8b5cf6;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-main);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--secondary), #1e293b);
+      color: white;
+      padding: 2.5rem 1rem;
+      text-align: center;
+    }
+
+    header h1 { margin: 0 0 0.5rem 0; font-size: 2rem; }
+    header p { margin: 0; color: #94a3b8; font-size: 1.05rem; }
+
+    main {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .section-card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      padding: 1.8rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    h2 {
+      color: var(--secondary);
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.5rem;
+      margin-top: 0;
+    }
+
+    h3 { color: var(--primary); margin-top: 1.5rem; }
+
+    p, li { color: #334155; text-align: justify; }
+
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin: 1.2rem 0;
+    }
+
+    .concept-box {
+      background: #f1f5f9;
+      border-left: 4px solid var(--primary);
+      padding: 1rem;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .concept-box.amber {
+      border-left-color: var(--accent-amber);
+      background: #fffbeb;
+    }
+
+    .concept-box.purple {
+      border-left-color: var(--accent-purple);
+      background: #f5f3ff;
+    }
+
+    .concept-box strong { display: block; margin-bottom: 0.4rem; color: var(--secondary); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 0.75rem;
+      text-align: left;
+    }
+
+    th { background-color: #f1f5f9; color: var(--secondary); }
+
+    .demo-area {
+      background: #fafafa;
+      border: 1px dashed #cbd5e1;
+      padding: 1.2rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.55rem 1.1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover { background-color: var(--primary-dark); }
+    button.btn-alt { background-color: var(--secondary); }
+    button.btn-alt:hover { background-color: #020617; }
+    button.btn-green { background-color: var(--accent-green); }
+    button.btn-green:hover { background-color: #059669; }
+
+    button.code-toggle {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+
+    button.code-toggle:hover { background: #eff6ff; }
+
+    .code-panel {
+      display: none;
+      margin-top: 1rem;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .code-panel.active { display: block; }
+
+    pre {
+      background-color: var(--code-bg);
+      color: #f8fafc;
+      padding: 1rem;
+      margin: 0;
+      font-family: 'Consolas', monospace;
+      font-size: 0.88rem;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+
+    .inline-code {
+      background: #f1f5f9;
+      color: var(--primary);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Manual Interactivo: Funciones y Métodos en JavaScript</h1>
+    <p>Aprende la teoría fundamental de subprogramas y manipulación de cadenas con ejemplos prácticos</p>
+  </header>
+
+  <main>
+    <!-- MÓDULO 1: TEORÍA DE FUNCIONES Y PARÁMETROS POR VALOR -->
+    <section class="section-card">
+      <h2>1. Anatomía de una Función y Pasaje por Valor</h2>
+      <p>Una <strong>Función</strong> es un bloque de código reutilizable diseñado para realizar una tarea específica. Recibe datos de entrada llamados <strong>parámetros</strong>, procesa las instrucciones y opcionalmente devuelve un resultado mediante la instrucción <span class="inline-code">return</span>.</p>
+
+      <div class="concept-grid">
+        <div class="concept-box">
+          <strong>📌 Parámetros Formales vs. Reales:</strong>
+          Los <em>parámetros</em> son las variables declaradas en la firma de la función. Los <em>argumentos</em> son los valores reales transmitidos al invocarla.
+        </div>
+        <div class="concept-box">
+          <strong>📌 Pasaje por Valor (Primitivos):</strong>
+          Los tipos primitivos (<span class="inline-code">Number</span>, <span class="inline-code">String</span>, <span class="inline-code">Boolean</span>) se pasan como una **copia**. Modificar el parámetro dentro de la función no altera la variable original del exterior.
+        </div>
+        <div class="concept-box">
+          <strong>📌 Retorno explicitado (<span class="inline-code">return</span>):</strong>
+          Interrumpe la ejecución del bloque de la función y devuelve el valor evaluado al punto donde fue llamada.
+        </div>
+        <div class="concept-box amber">
+          <strong>📌 Validación con isNaN y || (OR):</strong>
+          <span class="inline-code">isNaN(v)</span> comprueba si un valor <em>NO</em> es número. Al combinarlo con el operador disyuntivo <span class="inline-code">||</span>, la condición se cumple si <strong>al menos una</strong> de las entradas es inválida.
+        </div>
+      </div>
+
+      <div class="demo-area">
+        <h3>⚡ Práctica 1: Calculadora de Calificaciones (Pasaje por Valor + Validación)</h3>
+        <p>Demuestra el pasaje de parámetros numéricos, la verificación de tipos con <span class="inline-code">isNaN()</span> y la restricción de rango (0 a 10).</p>
+        <div class="btn-group">
+          <button onclick="iniciarCalculoPromedio()">1. Calcular Promedio</button>
+          <button class="code-toggle" onclick="toggleCode('code-valor')">📄 Ver Código</button>
+        </div>
+
+        <div id="code-valor" class="code-panel">
+<pre><code>// FUNCIÓN PRINCIPAL ORQUESTADORA (Sin parámetros)
+function iniciarCalculoPromedio() {
+  let n1 = Number(prompt("Ingresá la primera nota (0 a 10):"));
+  let n2 = Number(prompt("Ingresá la segunda nota (0 a 10):"));
+  let n3 = Number(prompt("Ingresá la tercera nota (0 a 10):"));
+
+  // 1. VALIDACIÓN DE TIPO DE DATO:
+  if (isNaN(n1) || isNaN(n2) || isNaN(n3)) {
+    alert("❌ Error: Al menos una de las notas ingresadas no es un número válido.");
+    return;
+  }
+
+  // 2. VALIDACIÓN DE RANGO (0 a 10):
+  if (n1 < 0 || n1 > 10 || n2 < 0 || n2 > 10 || n3 < 0 || n3 > 10) {
+    alert("❌ Error: Las notas deben estar comprendidas entre 0 y 10.");
+    return;
+  }
+
+  let resultado = calcularPromedio(n1, n2, n3);
+  alert("El promedio final calculado es: " + resultado.toFixed(2));
+}
+
+function calcularPromedio(nota1, nota2, nota3) {
+  let suma = nota1 + nota2 + nota3;
+  return suma / 3;
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- MÓDULO 2: PASAJE POR REFERENCIA (OBJETOS Y ARRAYS) -->
+    <section class="section-card">
+      <h2>2. Pasaje de Parámetros por Referencia</h2>
+      <p>A diferencia de los tipos primitivos, los tipos de datos compuestos como <strong>Objetos</strong> y <strong>Arreglos</strong> se pasan por **referencia**. Esto significa que la función comparte la dirección exacta de memoria donde reside la estructura.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Mecanismo</th>
+            <th>Tipos de Datos</th>
+            <th>Comportamiento en Memoria</th>
+            <th>Efecto en Variable Original</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Por Valor</strong></td>
+            <td><span class="inline-code">Number</span>, <span class="inline-code">String</span>, <span class="inline-code">Boolean</span></td>
+            <td>Se duplica el valor en un nuevo espacio del Stack.</td>
+            <td>Sin cambios (Inmutable desde el exterior).</td>
+          </tr>
+          <tr>
+            <td><strong>Por Referencia</strong></td>
+            <td><span class="inline-code">Array</span>, <span class="inline-code">Object</span></td>
+            <td>Se comparte el puntero hacia la dirección en el Heap.</td>
+            <td>Se modifica directamente el objeto/array original.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="demo-area">
+        <h3>⚡ Práctica 2: Modificación de Registros (Pasaje por Referencia)</h3>
+        <p>Demuestra cómo enviar un objeto como parámetro permite transformar su estado interno sin reasignarlo.</p>
+        <div class="btn-group">
+          <button class="btn-alt" onclick="iniciarAplicacionBeca()">1. Aplicar Descuento a Estudiante</button>
+          <button class="code-toggle" onclick="toggleCode('code-referencia')">📄 Ver Código</button>
+        </div>
+
+        <div id="code-referencia" class="code-panel">
+<pre><code>function iniciarAplicacionBeca() {
+  let alumno = {
+    nombre: "Carlos Gómez",
+    cuota: 10000,
+    becado: false
+  };
+
+  alert("Estado Inicial:\n" +
+        "Nombre: " + alumno.nombre + "\n" +
+        "Cuota: $" + alumno.cuota + "\n" +
+        "Becado: " + alumno.becado);
+
+  let porc = Number(prompt("Ingresá el porcentaje de beca a otorgar (ej: 20):"));
+
+  if (!isNaN(porc) && porc > 0 && porc <= 100) {
+    aplicarBeca(alumno, porc);
+
+    alert("Estado Final (luego de mutar el objeto):\n" +
+          "Nombre: " + alumno.nombre + "\n" +
+          "Nueva Cuota: $" + alumno.cuota + "\n" +
+          "Becado: " + alumno.becado);
+  } else {
+    alert("❌ Porcentaje no válido.");
+  }
+}
+
+function aplicarBeca(estudiante, porcentajeDescuento) {
+  let descuento = (estudiante.cuota * porcentajeDescuento) / 100;
+  estudiante.cuota = estudiante.cuota - descuento;
+  estudiante.becado = true;
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- MÓDULO 3: MODULARIZACIÓN Y ANIDACIÓN DE FUNCIONES (LOGIN) -->
+    <section class="section-card">
+      <h2>3. Modularización: Llamar Funciones dentro de Funciones</h2>
+      <p>La <strong>Modularización</strong> consiste en dividir un proceso en subfunciones especializadas que realizan tareas concretas (capturar entradas, validar datos, sanitizar o formatear) orquestadas por una función contenedora.</p>
+
+      <div class="concept-grid">
+        <div class="concept-box">
+          <strong>📌 Función Orquestadora (Sin Parámetros):</strong>
+          Asociada al evento <span class="inline-code">onclick</span> del botón. Inicia la secuencia invocando a las subfunciones necesarias sin requerir argumentos iniciales.
+        </div>
+        <div class="concept-box">
+          <strong>📌 Subfunciones de Utilidad (Con Parámetros):</strong>
+          Funciones encargadas de procesar fragmentos específicos de la lógica del programa y devolver un valor procesado o un resultado booleano.
+        </div>
+      </div>
+
+      <div class="demo-area">
+        <h3>⚡ Práctica 3: Sistema de Autenticación / Login Modular</h3>
+        <p>El botón invoca a la función vacía <span class="inline-code">iniciarLogin()</span>, la cual orquesta la llamada a subfunciones encargadas de solicitar datos, sanitizar texto, validar credenciales y dar la bienvenida.</p>
+        <div class="btn-group">
+          <button class="btn-green" onclick="iniciarLogin()">1. Iniciar Sesión (Login)</button>
+          <button class="code-toggle" onclick="toggleCode('code-login')">📄 Ver Código</button>
+        </div>
+
+        <div id="code-login" class="code-panel">
+<pre><code>// 1. FUNCIÓN PRINCIPAL ORQUESTADORA (Asociada al botón)
+function iniciarLogin() {
+  let datosIngresados = solicitarCredenciales();
+  
+  if (!datosIngresados.usuario || !datosIngresados.pass) {
+    alert("❌ Operación cancelada o datos incompletos.");
+    return;
+  }
+
+  // Se delega la validación a una subfunción
+  let esValido = validarCredenciales(datosIngresados.usuario, datosIngresados.pass);
+
+  if (esValido) {
+    mostrarMensajeBienvenida(datosIngresados.usuario);
+  } else {
+    alert("❌ Credenciales incorrectas. Acceso denegado.");
+  }
+}
+
+// 2. SUBFUNCIÓN DE CAPTURA Y LIMPIEZA
+function solicitarCredenciales() {
+  let user = prompt("Ingresá tu usuario (Ej: admin123):");
+  let password = prompt("Ingresá tu contraseña (Ej: 1234):");
+
+  if (!user || !password) {
+    return { usuario: "", pass: "" };
+  }
+
+  // Aplicación de métodos de saneamiento de String:
+  let usuarioLimpio = user.trim().toLowerCase();
+  
+  // Eliminamos números usando expresiones regulares (replace)
+  usuarioLimpio = usuarioLimpio.replace(/[0-9]/g, "");
+
+  return {
+    usuario: usuarioLimpio,
+    pass: password.trim()
+  };
+}
+
+// 3. SUBFUNCIÓN DE VALIDACIÓN LOGICA
+function validarCredenciales(user, password) {
+  const USUARIO_CORRECTO = "admin";
+  const PASS_CORRECTA = "1234";
+
+  return (user === USUARIO_CORRECTO && password === PASS_CORRECTA);
+}
+
+// 4. SUBFUNCIÓN DE SALIDA DE DATOS
+function mostrarMensajeBienvenida(nombreUsuario) {
+  let nombreFormateado = nombreUsuario.toUpperCase();
+  alert("🔑 ¡Acceso concedido! Bienvenid@ al sistema, " + nombreFormateado + ".");
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- MÓDULO 4: MANEJO Y SANITIZACIÓN DE CADENAS DE TEXTO (STRINGS) -->
+    <section class="section-card">
+      <h2>4. Manipulación y Sanitización de Textos (Strings)</h2>
+      <p>Cuando trabajamos con entradas de texto del usuario, es fundamental limpiar y transformar las cadenas antes de compararlas o procesarlas.</p>
+
+      <div class="concept-grid">
+        <div class="concept-box purple">
+          <strong>📌 .trim()</strong>
+          Elimina espacios en blanco invisibles al inicio y al final del texto. Evita errores cuando un usuario ingresa espacios por accidente.
+        </div>
+        <div class="concept-box purple">
+          <strong>📌 .toLowerCase() / .toUpperCase()</strong>
+          Convierten todo el texto a minúsculas o mayúsculas. Ideal para estandarizar búsquedas y validaciones sin importar cómo escribió el usuario.
+        </div>
+        <div class="concept-box purple">
+          <strong>📌 .replace(patrón, reemplazo)</strong>
+          Busca un patrón o expresión regular (RegEx) y lo reemplaza por otro valor. Se usa para eliminar números, letras o símbolos de un texto.
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Método / Expresión</th>
+            <th>Descripción / Patrón</th>
+            <th>Ejemplo de Entrada</th>
+            <th>Resultado Obtencion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="inline-code">cadena.trim()</span></td>
+            <td>Elimina espacios externos</td>
+            <td><span class="inline-code">"  admin  "</span></td>
+            <td><span class="inline-code">"admin"</span></td>
+          </tr>
+          <tr>
+            <td><span class="inline-code">cadena.toLowerCase()</span></td>
+            <td>Convierte a minúsculas</td>
+            <td><span class="inline-code">"ADMIN"</span></td>
+            <td><span class="inline-code">"admin"</span></td>
+          </tr>
+          <tr>
+            <td><span class="inline-code">cadena.toUpperCase()</span></td>
+            <td>Convierte a mayúsculas</td>
+            <td><span class="inline-code">"admin"</span></td>
+            <td><span class="inline-code">"ADMIN"</span></td>
+          </tr>
+          <tr>
+            <td><span class="inline-code">replace(/[0-9]/g, "")</span></td>
+            <td>Elimina todos los **números**</td>
+            <td><span class="inline-code">"admin123"</span></td>
+            <td><span class="inline-code">"admin"</span></td>
+          </tr>
+          <tr>
+            <td><span class="inline-code">replace(/[a-zA-Z]/g, "")</span></td>
+            <td>Elimina todas las **letras**</td>
+            <td><span class="inline-code">"user123"</span></td>
+            <td><span class="inline-code">"123"</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <script>
+    // CONTROL DE VISIBILIDAD DE PANELES DE CÓDIGO
+    function toggleCode(panelId) {
+      const panel = document.getElementById(panelId);
+      panel.classList.toggle('active');
+    }
+
+    // ==========================================
+    // MÓDULO 1: CALCULADORA DE PROMEDIOS
+    // ==========================================
+    function iniciarCalculoPromedio() {
+      let n1 = Number(prompt("Ingresá la primera nota (0 a 10):"));
+      let n2 = Number(prompt("Ingresá la segunda nota (0 a 10):"));
+      let n3 = Number(prompt("Ingresá la tercera nota (0 a 10):"));
+
+      if (isNaN(n1) || isNaN(n2) || isNaN(n3)) {
+        alert("❌ Error: Al menos una de las notas ingresadas no es un número válido.");
+        return;
+      }
+
+      if (n1 < 0 || n1 > 10 || n2 < 0 || n2 > 10 || n3 < 0 || n3 > 10) {
+        alert("❌ Error: Las notas deben estar comprendidas entre 0 y 10.");
+        return;
+      }
+
+      let resultado = calcularPromedio(n1, n2, n3);
+      alert("El promedio final calculado es: " + resultado.toFixed(2));
+    }
+
+    function calcularPromedio(nota1, nota2, nota3) {
+      let suma = nota1 + nota2 + nota3;
+      return suma / 3;
+    }
+
+    // ==========================================
+    // MÓDULO 2: MODIFICACIÓN POR REFERENCIA
+    // ==========================================
+    function iniciarAplicacionBeca() {
+      let alumno = {
+        nombre: "Carlos Gómez",
+        cuota: 10000,
+        becado: false
+      };
+
+      alert("Estado Inicial:\n" +
+            "Nombre: " + alumno.nombre + "\n" +
+            "Cuota: $" + alumno.cuota + "\n" +
+            "Becado: " + alumno.becado);
+
+      let porc = Number(prompt("Ingresá el porcentaje de beca a otorgar (ej: 20):"));
+
+      if (!isNaN(porc) && porc > 0 && porc <= 100) {
+        aplicarBeca(alumno, porc);
+
+        alert("Estado Final (luego de mutar el objeto):\n" +
+              "Nombre: " + alumno.nombre + "\n" +
+              "Nueva Cuota: $" + alumno.cuota + "\n" +
+              "Becado: " + alumno.becado);
+      } else {
+        alert("❌ Porcentaje no válido.");
+      }
+    }
+
+    function aplicarBeca(estudiante, porcentajeDescuento) {
+      let descuento = (estudiante.cuota * porcentajeDescuento) / 100;
+      estudiante.cuota = estudiante.cuota - descuento;
+      estudiante.becado = true;
+    }
+
+    // ==========================================
+    // MÓDULO 3: LOGIN CON LLAMADAS ANIDADAS
+    // ==========================================
+    function iniciarLogin() {
+      let datosIngresados = solicitarCredenciales();
+      
+      if (!datosIngresados.usuario || !datosIngresados.pass) {
+        alert("❌ Operación cancelada o datos incompletos.");
+        return;
+      }
+
+      let esValido = validarCredenciales(datosIngresados.usuario, datosIngresados.pass);
+
+      if (esValido) {
+        mostrarMensajeBienvenida(datosIngresados.usuario);
+      } else {
+        alert("❌ Credenciales incorrectas. Acceso denegado.");
+      }
+    }
+
+    function solicitarCredenciales() {
+      let user = prompt("Ingresá tu usuario (Ej: admin123):");
+      let password = prompt("Ingresá tu contraseña (Ej: 1234):");
+
+      if (!user || !password) {
+        return { usuario: "", pass: "" };
+      }
+
+      // Limpieza y formateo con métodos de String
+      let usuarioLimpio = user.trim().toLowerCase();
+      
+      // Se eliminan los dígitos numéricos
+      usuarioLimpio = usuarioLimpio.replace(/[0-9]/g, "");
+
+      return {
+        usuario: usuarioLimpio,
+        pass: password.trim()
+      };
+    }
+
+    function validarCredenciales(user, password) {
+      const USUARIO_CORRECTO = "admin";
+      const PASS_CORRECTA = "1234";
+
+      return (user === USUARIO_CORRECTO && password === PASS_CORRECTA);
+    }
+
+    function mostrarMensajeBienvenida(nombreUsuario) {
+      let nombreFormateado = nombreUsuario.toUpperCase();
+      alert("🔑 ¡Acceso concedido! Bienvenid@ al sistema, " + nombreFormateado + ".");
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual Interactivo JavaScript: De PSeInt a CRUD Avanzado</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #0f172a;
+      --bg-light: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --border-color: #e2e8f0;
+      --accent: #0ea5e9;
+      --accent-bg: #e0f2fe;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-main);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--secondary), #1e293b);
+      color: white;
+      padding: 2.5rem 1rem;
+      text-align: center;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 2.2rem;
+    }
+
+    header p {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 1.1rem;
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .section-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    h2 {
+      color: var(--secondary);
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.5rem;
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    h3 {
+      color: var(--primary-dark);
+      margin-top: 1.5rem;
+    }
+
+    p, li {
+      color: #334155;
+    }
+
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .concept-box {
+      background: #f1f5f9;
+      border-left: 4px solid var(--primary);
+      padding: 1rem;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .concept-box.accent {
+      border-left-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 0.75rem;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: var(--secondary);
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .demo-area {
+      background: #fafafa;
+      border: 1px dashed #cbd5e1;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover { background-color: var(--primary-dark); }
+
+    button.btn-alt { background-color: var(--secondary); }
+    button.btn-alt:hover { background-color: #334155; }
+
+    button.code-toggle {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+    button.code-toggle:hover {
+      background: #eff6ff;
+    }
+
+    .code-panel {
+      display: none;
+      margin-top: 1rem;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .code-panel.active { display: block; }
+
+    pre {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 1.2rem;
+      margin: 0;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.88rem;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+
+    .inline-code {
+      background: #f1f5f9;
+      color: #d97706;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+
+    .callout {
+      background-color: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-left: 4px solid #16a34a;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+
+    .callout-warning {
+      background-color: #fffbebf1;
+      border: 1px solid #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Manual Interactivo JavaScript</h1>
+    <p>Desde la lógica de PSeInt hasta el control de estructuras de datos y patrón CRUD</p>
+  </header>
+
+  <main>
+    <!-- MÓDULO 0: ENTORNO Y BASE SINTÁCTICA -->
+    <section class="section-card">
+      <h2>📘 0. Entorno, Integración HTML y Equivalencias</h2>
+      <p>JavaScript se puede incorporar en una página de dos formas principales: mediante un script interno o vinculando un archivo externo <span class="inline-code">.js</span>. Para desarrollo modular y limpio, se recomienda vincular archivos externos mediante el selector <span class="inline-code">&lt;script src="..."&gt;</span>.</p>
+
+      <div class="callout">
+        <strong>💡 Metodología de Ejecución:</strong> Se puede escribir el código en un archivo externo como <span class="inline-code">app.js</span> y vincularlo con un documento simple <span class="inline-code">index.html</span>. Para probar fragmentos, también se puede abrir la Consola del navegador (F12) e ingresar el código directamente.
+      </div>
+
+      <h3>Equivalencias directas: PSeInt ↔ JavaScript</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Concepto / Acción</th>
+            <th>Sintaxis PSeInt</th>
+            <th>Sintaxis JavaScript</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Definir Variable</strong></td>
+            <td><span class="inline-code">Definir x Como Entero</span></td>
+            <td><span class="inline-code">let x;</span> o <span class="inline-code">const PI = 3.1416;</span></td>
+          </tr>
+          <tr>
+            <td><strong>Leer Dato</strong></td>
+            <td><span class="inline-code">Leer nombre</span></td>
+            <td><span class="inline-code">let nombre = prompt("...");</span></td>
+          </tr>
+          <tr>
+            <td><strong>Mostrar Salida</strong></td>
+            <td><span class="inline-code">Escribir "Hola", x</span></td>
+            <td><span class="inline-code">alert("Hola " + x);</span> / <span class="inline-code">console.log(...)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Condicional</strong></td>
+            <td><span class="inline-code">Si ... Entonces ... FinSi</span></td>
+            <td><span class="inline-code">if (...) { ... } else { ... }</span></td>
+          </tr>
+          <tr>
+            <td><strong>Bucle mientras</strong></td>
+            <td><span class="inline-code">Mientras cond Hacer ... FinMientras</span></td>
+            <td><span class="inline-code">while (cond) { ... }</span></td>
+          </tr>
+          <tr>
+            <td><strong>Bucle repetir</strong></td>
+            <td><span class="inline-code">Repetir ... Hasta Que cond</span></td>
+            <td><span class="inline-code">do { ... } while (!cond);</span> <em>(Lógica invertida)</em></td>
+          </tr>
+          <tr>
+            <td><strong>Bucle para</strong></td>
+            <td><span class="inline-code">Para i &lt;- 1 Hasta N Con Paso 1</span></td>
+            <td><span class="inline-code">for (let i = 0; i &lt; N; i++)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Funciones</strong></td>
+            <td><span class="inline-code">Funcion res &lt;- Sumar(a,b) ... FinFuncion</span></td>
+            <td><span class="inline-code">function sumar(a, b) { return a + b; }</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout-warning">
+        <strong>⚠️ Importante sobre <span class="inline-code">prompt()</span>:</strong> Todo valor retornado por <span class="inline-code">prompt()</span> se procesa como texto (<span class="inline-code">String</span>). Para hacer operaciones matemáticas es obligatorio convertir el dato mediante <span class="inline-code">Number()</span>, <span class="inline-code">parseInt()</span> o <span class="inline-code">parseFloat()</span>.
+      </div>
+    </section>
+
+    <!-- MÓDULO 1: ARREGLOS SIMPLES Y BUCLES FOR/DO-WHILE -->
+    <section class="section-card">
+      <h2>1. Arreglos Simples, Bucles y Métodos del Array</h2>
+      <p>Un <strong>Array</strong> permite almacenar varios valores en una misma variable. A diferencia de PSeInt (donde el primer índice suele ser 1), en JS <strong>el índice inicial siempre es 0</strong>. Se obtiene el tamaño del arreglo con la propiedad <span class="inline-code">.length</span>.</p>
+
+      <div class="concept-grid">
+        <div class="concept-box">
+          <strong>📌 push(valor)</strong><br>
+          Inserta un elemento al final del arreglo.
+        </div>
+        <div class="concept-box">
+          <strong>📌 pop()</strong><br>
+          Elimina el último elemento del arreglo.
+        </div>
+        <div class="concept-box">
+          <strong>📌 splice(pos, cant)</strong><br>
+          Elimina <span class="inline-code">cant</span> elementos desde un índice concreto.
+        </div>
+        <div class="concept-box accent">
+          <strong>📌 Iteración con for</strong><br>
+          <span class="inline-code">for (let i = 0; i &lt; arr.length; i++)</span>.
+        </div>
+      </div>
+
+      <div class="demo-area">
+        <h3>⚡ Práctica 1: Lista de Frutas (Array Básico)</h3>
+        <p>Interactúa con un vector básico mediante ventanas de entrada/salida:</p>
+        <div class="btn-group">
+          <button onclick="verFrutas()">1. Ver Lista (READ)</button>
+          <button onclick="agregarFruta()">2. Agregar Fruta (CREATE)</button>
+          <button onclick="eliminarFruta()">3. Eliminar Fruta (DELETE)</button>
+          <button class="code-toggle" onclick="toggleCode('code-simple')">📄 Ver Código</button>
+        </div>
+
+        <div id="code-simple" class="code-panel">
+<pre><code>let frutas = ["Manzana", "Banana", "Naranja"];
+
+// Recorrer usando ciclo for
+function verFrutas() {
+  let texto = "LISTA DE FRUTAS:\n\n";
+  for (let i = 0; i < frutas.length; i++) {
+    texto += (i + 1) + ". " + frutas[i] + "\n";
+  }
+  alert(texto);
+}
+
+// Agregar al final usando push
+function agregarFruta() {
+  let nueva = prompt("Nombre de la nueva fruta:");
+  if (nueva && nueva.trim() !== "") {
+    frutas.push(nueva.trim());
+    alert("✓ Fruta agregada.");
+  }
+}
+
+// Eliminar buscando la posición con findIndex y removiendo con splice
+function eliminarFruta() {
+  let eliminar = prompt("Nombre de la fruta a eliminar:");
+  if (!eliminar) return;
+  let idx = frutas.findIndex(f => f.toLowerCase() === eliminar.trim().toLowerCase());
+  if (idx !== -1) {
+    frutas.splice(idx, 1);
+    alert("✓ Fruta eliminada.");
+  } else {
+    alert("❌ No encontrada.");
+  }
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- MÓDULO 2: ARREGLOS DE OBJETOS Y PATRÓN CRUD -->
+    <section class="section-card">
+      <h2>2. Arreglos de Objetos y Patrón CRUD Completo</h2>
+      <p>Cuando requerimos gestionar registros estructurados (por ejemplo: DNI, Nombre y Nota), se combina la estructura de <strong>Arreglos con Objetos</strong> (equivalente a los Registros/Estructuras en otros lenguajes). Sobre esta estructura aplicamos la arquitectura <strong>CRUD</strong> (Create, Read, Update, Delete).</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Operación CRUD</th>
+            <th>Descripción teórica</th>
+            <th>Patrón de Código en JavaScript</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>C - Create</strong></td>
+            <td>Verifica que la clave única (DNI) no exista antes de insertar con validación.</td>
+            <td><span class="inline-code">alumnos.push({ dni, nombre, nota })</span></td>
+          </tr>
+          <tr>
+            <td><strong>R - Read</strong></td>
+            <td>Itera sobre la estructura para extraer e informar los campos.</td>
+            <td><span class="inline-code">for (let i = 0; i &lt; alumnos.length; i++) { ... }</span></td>
+          </tr>
+          <tr>
+            <td><strong>U - Update</strong></td>
+            <td>Busca por la clave primaria, solicita el nuevo valor y aplica la modificación.</td>
+            <td><span class="inline-code">alumnos[i].nota = nuevaNota</span></td>
+          </tr>
+          <tr>
+            <td><strong>D - Delete</strong></td>
+            <td>Busca por DNI, solicita confirmación y retira el elemento con <span class="inline-code">splice</span>.</td>
+            <td><span class="inline-code">alumnos.splice(i, 1)</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="demo-area">
+        <h3>⚡ Práctica 2: Sistema CRUD Completo de Alumnos por DNI</h3>
+        <p>Prueba las 4 operaciones esenciales de un sistema de información sobre un arreglo de objetos:</p>
+        <div class="btn-group">
+          <button class="btn-alt" onclick="verAlumnos()">1. Ver Alumnos (READ)</button>
+          <button class="btn-alt" onclick="agregarAlumno()">2. Agregar Alumno (CREATE)</button>
+          <button class="btn-alt" onclick="modificarNota()">3. Modificar Nota (UPDATE)</button>
+          <button class="btn-alt" onclick="eliminarAlumno()">4. Eliminar Alumno (DELETE)</button>
+          <button class="btn-alt" onclick="calcularEstadisticas()">5. Estadísticas (Promedio/Máx)</button>
+          <button class="code-toggle" onclick="toggleCode('code-crud')">📄 Ver Código</button>
+        </div>
+
+        <div id="code-crud" class="code-panel">
+<pre><code>// Estructura de datos inicial
+let alumnos = [
+  { dni: "40111222", nombre: "Ana García", nota: 8 },
+  { dni: "40333444", nombre: "Juan Martínez", nota: 6 },
+  { dni: "41555666", nombre: "Carlos López", nota: 9 }
+];
+
+// READ: Muestra el listado de elementos
+function verAlumnos() {
+  if (alumnos.length === 0) {
+    alert("No hay alumnos registrados.");
+    return;
+  }
+  let listado = "=== ALUMNOS REGISTRADOS ===\n\n";
+  for (let i = 0; i < alumnos.length; i++) {
+    listado += `${i + 1}. ${alumnos[i].nombre}\n   DNI: ${alumnos[i].dni} | Nota: ${alumnos[i].nota}\n\n`;
+  }
+  listado += "Total: " + alumnos.length + " alumnos.";
+  alert(listado);
+}
+
+// CREATE: Validación de duplicados y agregado
+function agregarAlumno() {
+  let dniNuevo = prompt("DNI del nuevo alumno:");
+  if (!dniNuevo) return;
+  dniNuevo = dniNuevo.trim();
+
+  // Buscar si el DNI ya existe
+  let yaExiste = false;
+  for (let i = 0; i < alumnos.length; i++) {
+    if (alumnos[i].dni === dniNuevo) {
+      yaExiste = true;
+      break;
+    }
+  }
+
+  if (yaExiste) {
+    alert("❌ El DNI " + dniNuevo + " ya está registrado.");
+    return;
+  }
+
+  let nombreNuevo = prompt("Nombre completo:");
+  let notaNuevo = Number(prompt("Nota (0-10):"));
+
+  // Bucle de validación
+  while (isNaN(notaNuevo) || notaNuevo < 0 || notaNuevo > 10) {
+    alert("❌ Nota inválida (debe ser entre 0 y 10).");
+    notaNuevo = Number(prompt("Ingresá la nota nuevamente (0-10):"));
+  }
+
+  alumnos.push({ dni: dniNuevo, nombre: nombreNuevo.trim(), nota: notaNuevo });
+  alert("✓ Alumno " + nombreNuevo + " registrado correctamente.");
+}
+
+// UPDATE: Búsqueda y actualización de propiedad
+function modificarNota() {
+  let dniBuscado = prompt("DNI del alumno a modificar:");
+  if (!dniBuscado) return;
+  
+  let encontrado = false;
+  for (let i = 0; i < alumnos.length; i++) {
+    if (alumnos[i].dni === dniBuscado.trim()) {
+      let nuevaNota = Number(prompt(`Nueva nota para ${alumnos[i].nombre} (actual: ${alumnos[i].nota}):`));
+      
+      while (isNaN(nuevaNota) || nuevaNota < 0 || nuevaNota > 10) {
+        alert("❌ Nota inválida.");
+        nuevaNota = Number(prompt("Ingresá una nota válida (0-10):"));
+      }
+      
+      alumnos[i].nota = nuevaNota;
+      alert("✓ Nota modificada correctamente.");
+      encontrado = true;
+      break;
+    }
+  }
+
+  if (!encontrado) alert("❌ DNI no encontrado.");
+}
+
+// DELETE: Búsqueda, confirmación y borrado mediante splice
+function eliminarAlumno() {
+  let dniEliminar = prompt("DNI del alumno a eliminar:");
+  if (!dniEliminar) return;
+
+  let encontrado = false;
+  for (let i = 0; i < alumnos.length; i++) {
+    if (alumnos[i].dni === dniEliminar.trim()) {
+      let confirmar = confirm(`¿Confirmas eliminar a ${alumnos[i].nombre}?`);
+      if (confirmar) {
+        let borrado = alumnos.splice(i, 1);
+        alert(`✓ El alumno ${borrado[0].nombre} fue eliminado.`);
+      } else {
+        alert("⚠ Acción cancelada.");
+      }
+      encontrado = true;
+      break;
+    }
+  }
+
+  if (!encontrado) alert("❌ DNI no encontrado.");
+}
+
+// CÁLCULOS SOBRE EL ARREGLO
+function calcularEstadisticas() {
+  if (alumnos.length === 0) {
+    alert("No hay registros suficientes.");
+    return;
+  }
+  let suma = 0;
+  let notaMaxima = alumnos[0].nota;
+  let mejorAlumno = alumnos[0].nombre;
+
+  for (let i = 0; i < alumnos.length; i++) {
+    suma += alumnos[i].nota;
+    if (alumnos[i].nota > notaMaxima) {
+      notaMaxima = alumnos[i].nota;
+      mejorAlumno = alumnos[i].nombre;
+    }
+  }
+
+  let promedio = suma / alumnos.length;
+  alert(`ESTADÍSTICAS DEL CURSO:\n\n- Promedio General: ${promedio.toFixed(2)}\n- Nota Más Alta: ${notaMaxima} (${mejorAlumno})`);
+}</code></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // CONTROL DE VISIBILIDAD DE LOS PANELES DE CÓDIGO
+    function toggleCode(panelId) {
+      const panel = document.getElementById(panelId);
+      panel.classList.toggle('active');
+    }
+
+    // LÓGICA 1: ARREGLO SIMPLE
+    let frutas = ["Manzana", "Banana", "Naranja"];
+
+    function verFrutas() {
+      let texto = "LISTA DE FRUTAS:\n\n";
+      for (let i = 0; i < frutas.length; i++) {
+        texto += (i + 1) + ". " + frutas[i] + "\n";
+      }
+      alert(texto);
+    }
+
+    function agregarFruta() {
+      let nueva = prompt("Ingresá el nombre de la nueva fruta:");
+      if (nueva && nueva.trim() !== "") {
+        frutas.push(nueva.trim());
+        alert("✓ Fruta agregada correctamente.");
+      }
+    }
+
+    function eliminarFruta() {
+      let eliminar = prompt("Ingresá el nombre de la fruta a eliminar:");
+      if (!eliminar) return;
+      let idx = frutas.findIndex(f => f.toLowerCase() === eliminar.trim().toLowerCase());
+      if (idx !== -1) {
+        frutas.splice(idx, 1);
+        alert("✓ Fruta eliminada correctamente.");
+      } else {
+        alert("❌ La fruta no fue encontrada.");
+      }
+    }
+
+    // LÓGICA 2: CRUD DE OBJETOS
+    let alumnos = [
+      { dni: "40111222", nombre: "Ana García", nota: 8 },
+      { dni: "40333444", nombre: "Juan Martínez", nota: 6 },
+      { dni: "41555666", nombre: "Carlos López", nota: 9 }
+    ];
+
+    function verAlumnos() {
+      if (alumnos.length === 0) {
+        alert("No hay alumnos registrados.");
+        return;
+      }
+      let listado = "=== ALUMNOS REGISTRADOS ===\n\n";
+      for (let i = 0; i < alumnos.length; i++) {
+        listado += (i + 1) + ". " + alumnos[i].nombre + "\n   DNI: " + alumnos[i].dni + " | Nota: " + alumnos[i].nota + "\n\n";
+      }
+      listado += "Total: " + alumnos.length + " alumnos.";
+      alert(listado);
+    }
+
+    function agregarAlumno() {
+      let dniNuevo = prompt("DNI del nuevo alumno:");
+      if (!dniNuevo) return;
+      dniNuevo = dniNuevo.trim();
+
+      let yaExiste = false;
+      for (let i = 0; i < alumnos.length; i++) {
+        if (alumnos[i].dni === dniNuevo) {
+          yaExiste = true;
+          break;
+        }
+      }
+
+      if (yaExiste) {
+        alert("❌ El DNI " + dniNuevo + " ya está registrado.");
+        return;
+      }
+
+      let nombreNuevo = prompt("Nombre completo del alumno:");
+      let notaNuevo = Number(prompt("Nota (0 a 10):"));
+
+      while (isNaN(notaNuevo) || notaNuevo < 0 || notaNuevo > 10) {
+        alert("❌ Nota inválida.");
+        notaNuevo = Number(prompt("Ingresá la nota nuevamente (0-10):"));
+      }
+
+      alumnos.push({ dni: dniNuevo, nombre: nombreNuevo.trim(), nota: notaNuevo });
+      alert("✓ Alumno " + nombreNuevo + " registrado con éxito.");
+    }
+
+    function modificarNota() {
+      let dniBuscado = prompt("Ingresá el DNI del alumno a modificar:");
+      if (!dniBuscado) return;
+
+      let encontrado = false;
+      for (let i = 0; i < alumnos.length; i++) {
+        if (alumnos[i].dni === dniBuscado.trim()) {
+          let nuevaNota = Number(prompt("Nueva nota para " + alumnos[i].nombre + " (actual: " + alumnos[i].nota + "):"));
+
+          while (isNaN(nuevaNota) || nuevaNota < 0 || nuevaNota > 10) {
+            alert("❌ Nota inválida.");
+            nuevaNota = Number(prompt("Ingresá una nota válida (0-10):"));
+          }
+
+          alumnos[i].nota = nuevaNota;
+          alert("✓ Nota actualizada correctamente.");
+          encontrado = true;
+          break;
+        }
+      }
+
+      if (!encontrado) alert("❌ DNI no encontrado.");
+    }
+
+    function eliminarAlumno() {
+      let dniEliminar = prompt("Ingresá el DNI del alumno a eliminar:");
+      if (!dniEliminar) return;
+
+      let encontrado = false;
+      for (let i = 0; i < alumnos.length; i++) {
+        if (alumnos[i].dni === dniEliminar.trim()) {
+          let confirmar = confirm("¿Confirmas eliminar a " + alumnos[i].nombre + "?");
+          if (confirmar) {
+            let borrado = alumnos.splice(i, 1);
+            alert("✓ " + borrado[0].nombre + " fue eliminado correctamente.");
+          } else {
+            alert("⚠ Eliminación cancelada.");
+          }
+          encontrado = true;
+          break;
+        }
+      }
+
+      if (!encontrado) alert("❌ DNI no encontrado.");
+    }
+
+    function calcularEstadisticas() {
+      if (alumnos.length === 0) {
+        alert("No hay registros para calcular.");
+        return;
+      }
+      let suma = 0;
+      let notaMaxima = alumnos[0].nota;
+      let mejorAlumno = alumnos[0].nombre;
+
+      for (let i = 0; i < alumnos.length; i++) {
+        suma += alumnos[i].nota;
+        if (alumnos[i].nota > notaMaxima) {
+          notaMaxima = alumnos[i].nota;
+          mejorAlumno = alumnos[i].nombre;
+        }
+      }
+
+      let promedio = suma / alumnos.length;
+      alert("ESTADÍSTICAS DEL CURSO:\n\n- Promedio General: " + promedio.toFixed(2) + "\n- Nota Más Alta: " + notaMaxima + " (" + mejorAlumno + ")");
+    }
+  </script>
+</body>
+</html>
