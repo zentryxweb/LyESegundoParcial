@@ -1,8 +1,9 @@
+# Workflow automático para compilar Vite y desplegar en GitHub Pages
 name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "des-"]
   workflow_dispatch:
 
 permissions:
